@@ -39,11 +39,11 @@ window.onload = function(){
     
     // Fonction d'initialisation qui s'exécute lorsque le DOM est chargé
     navigator.geolocation.getCurrentPosition(succes,error);
-    fetch('api.php')
+    fetch('http://127.0.0.1/randonneeNSI/api.php')
         .then(response => response.json())
         .then(data => {
     console.log(data); // Tu peux afficher ça ou l'injecter dans le HTML
-
+    getproxi(data,lon,lat)
   })
   .catch(error => console.error('Erreur :', error));
     
@@ -51,7 +51,11 @@ window.onload = function(){
 
 
 
-// localisation
 
+
+// localisation
+function getproxi(data,long,lat){
+    console.log(data[1])
+}
 
 
