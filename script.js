@@ -26,20 +26,53 @@ function initMap(lat, lon,macarte) {
     }
 
 }
-function initMapTrajet(lat, lon,macarte2) {
-    // Créer l'objet "macarte" et l'insèrer dans l'élément HTML qui a l'ID "map"
-    macarte2 = L.map('map-trajet').setView([lat, lon], 11);
-    // Leaflet ne récupère pas les cartes (tiles) sur un serveur par défaut. Nous devons lui préciser où nous souhaitons les récupérer. Ici, openstreetmap.fr
-    L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
-        // Il est toujours bien de laisser le lien vers la source des données
-        attribution: 'données © <a href="//osm.org/copyright">OpenStreetMap</a>/ODbL - rendu <a href="//openstreetmap.fr">OSM France</a>',
-        minZoom: 1,
-        maxZoom: 20
-    }).addTo(macarte2);
-    var gpx = '../gpx-trace3.gpx';
-    new L.GPX(gpx, {async: true}).on('loaded', function(e) {
-    map.fitBounds(e.target.getBounds());
-    }).addTo(macarte2);
+// function initMapTrajet(lat, lon,macarte2) {
+//     // Créer l'objet "macarte" et l'insèrer dans l'élément HTML qui a l'ID "map"
+//     macarte2 = L.map('map-trajet').setView([lat, lon], 11);
+//     // Leaflet ne récupère pas les cartes (tiles) sur un serveur par défaut. Nous devons lui préciser où nous souhaitons les récupérer. Ici, openstreetmap.fr
+//     L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
+//         // Il est toujours bien de laisser le lien vers la source des données
+//         attribution: 'données © <a href="//osm.org/copyright">OpenStreetMap</a>/ODbL - rendu <a href="//openstreetmap.fr">OSM France</a>',
+//         minZoom: 1,
+//         maxZoom: 20
+//     }).addTo(macarte2);
+//     var gpx = data[1]["randonnee_carte"]; // Cela devrait être l'URL de ton fichier GPX
+//     new L.GPX(gpx, {async: true}).on('loaded', function(e) {
+//         macarte2.fitBounds(e.target.getBounds());
+//     }).addTo(macarte2);
+//}
+
+async function loadGPXAndDisplay() {
+    const gpxUrl = 'https://cors-anywhere.herokuapp.com/https://randogps.net/nb_telecharge.php?dep=38&num=8';  // URL où le GPX est généré
+
+    try {
+        
+        const response = await fetch(gpxUrl);
+        
+        if (!response.ok) {
+            throw new Error('Erreur lors du téléchargement du fichier GPX');
+        }
+
+        // 2. Lire le contenu du fichier GPX
+        const gpxData = await response.text();
+        
+        // 3. Afficher le GPX sur la carte
+        const macarte2 = L.map('map-trajet').setView([latUser, longUser], 11);  // Adapte selon ton besoin
+        L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
+            attribution: 'données © <a href="//osm.org/copyright">OpenStreetMap</a>/ODbL - rendu <a href="//openstreetmap.fr">OSM France</a>',
+            minZoom: 1,
+            maxZoom: 20
+        }).addTo(macarte2);
+
+        // 4. Créer un objet GPX avec le fichier récupéré
+        new L.GPX(gpxData, { async: true })
+            .on('loaded', function(e) {
+                macarte2.fitBounds(e.target.getBounds());  // Ajuster la carte aux limites du GPX
+            })
+            .addTo(macarte2);
+    } catch (error) {
+        console.error("Erreur lors du chargement du fichier GPX:", error);
+    }
 }
 // window.onload = function(){
 //     const succes = (position) =>{
@@ -83,7 +116,7 @@ async function init(){
         latUser = latitude;
         longUser = longitude;
         console.log(latUser)
-        const response = await fetch('../api.php');
+        const response = await fetch('api.php');
         data = await response.json();
         console.log(data);
 
@@ -91,7 +124,8 @@ async function init(){
         let macarte = null;
         let macarte2 = null;
         initMap(latUser,longUser,macarte); 
-        initMapTrajet(latUser,longUser,macarte2);
+        loadGPXAndDisplay();
+        // initMapTrajet(latUser,longUser,macarte2);
 
     }catch (error) {
         console.error('Erreur attrapée dans init() :', error);
