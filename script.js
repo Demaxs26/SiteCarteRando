@@ -18,6 +18,7 @@ let donnee = null;
 let longUser = null;
 let latUser = null;
 let listeRando = []
+let marker1 = null; //definition global *
 // Fonction d'initialisation de la carte
 function initMap(lat, lon) {
     // Créer l'objet "macarte" et l'insèrer dans l'élément HTML qui a l'ID "map"
@@ -37,7 +38,7 @@ function initMap(lat, lon) {
         const locRando = listeRando[i]["randonnee_localisation"].split(";");
         const longRando = parseFloat(locRando[1]);
         const latRando = parseFloat(locRando[0]);
-        let marker1 = L.marker([latRando, longRando]);
+        marker1 = L.marker([latRando, longRando]); //let
 
         marker1.bindPopup(listeRando[i]["randonnee_nom"]);
         marker1.addTo(macarte);
@@ -200,7 +201,13 @@ buttonChearch.addEventListener("click" ,() =>{
     if(proxiInput.value != null){
         distMax = proxiInput.value
     }
-   
+    marker1.clearLayers();
+    const taille = listeRando.length;
+    for (let i = 0;i<taille;i++){
+        
+        listeRando.pop()
+    }
+    getproxi()
 });
 
 
