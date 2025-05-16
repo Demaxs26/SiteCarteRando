@@ -1,10 +1,25 @@
+let timeInput = document.getElementById("dureeHeure") ;
+let distanceInput = document.getElementById("distance") ;
+let proxiInput = document.getElementById("proximite") ;
 
+const buttonChearch = document.querySelector(".button-chearch")
+const displayName = document.querySelector(".box-title p");
+const displayDistance = document.querySelector(".box-descrp #distance");
+const displayDuree = document.querySelector(".box-descrp #duree");
+const displayDescr = document.querySelector(".box-descrp #description-rando");
+console.log(displayDescr,displayName,displayDistance,displayDuree)
+
+let macarte = null;
+let macarte2 = null;
+let time = 10;
+let distance = 10;
+let distMax = 20;
 let donnee = null;
 let longUser = null;
 let latUser = null;
 let listeRando = []
 // Fonction d'initialisation de la carte
-function initMap(lat, lon,macarte) {
+function initMap(lat, lon) {
     // Créer l'objet "macarte" et l'insèrer dans l'élément HTML qui a l'ID "map"
     macarte = L.map('map').setView([lat, lon], 11);
     // Leaflet ne récupère pas les cartes (tiles) sur un serveur par défaut. Nous devons lui préciser où nous souhaitons les récupérer. Ici, openstreetmap.fr
@@ -16,64 +31,74 @@ function initMap(lat, lon,macarte) {
     }).addTo(macarte);
     let marker = L.marker([lat, lon]).addTo(macarte);
     marker.bindPopup("votre localisation");
+
     for (let i = 0; i<listeRando.length;i++){
+
         const locRando = listeRando[i]["randonnee_localisation"].split(";");
         const longRando = parseFloat(locRando[1]);
         const latRando = parseFloat(locRando[0]);
-        let marker1 = L.marker([latRando, longRando]).addTo(macarte);
+        let marker1 = L.marker([latRando, longRando]);
 
-        
+        marker1.bindPopup(listeRando[i]["randonnee_nom"]);
+        marker1.addTo(macarte);
+        marker1.addEventListener("click" , async (e)=>{
+
+            // afiichage description //
+
+            displayName.textContent = listeRando[i]['randonnee_nom'];
+            displayDistance.textContent = listeRando[i]['randonnee_distance'];
+            displayDuree.textContent = listeRando[i]['randonnee_duree'];
+            displayDescr.textContent = listeRando[i]['randonnee_descr']
+
+            // affichage carte  //
+
+            console.log("id:",listeRando[i]['randonnee_id']);
+            // let response = await fetch('gpx_files/'+listeRando[i]['randonnee_id']+".gpx"); 
+            let response = await fetch('gpx_files/' + listeRando[i]['randonnee_id'] + '.gpx');
+            let gpx = await response.text();
+            gpx = gpx.substr(2);
+            console.log(gpx)
+            console.log(macarte2)
+            if (!macarte2) {
+                console.warn("Carte non initialisée !");
+                return;
+            }
+            if (!gpx.startsWith("<?xml")) {
+                console.error("Le fichier GPX n'est pas bien interprété !");
+            }
+            const gpxLayer = new L.GPX(gpx, {async: true}).on('loaded', function(e) {
+                macarte2.fitBounds(e.target.getBounds());
+            });
+            gpxLayer.addTo(macarte2);
+            // L.control.layers(null, { 'Trace GPX': gpxLayer }).addTo(macarte2);
+
+            console.log(macarte2)
+           
+        })
     }
 
 }
-// function initMapTrajet(lat, lon,macarte2) {
-//     // Créer l'objet "macarte" et l'insèrer dans l'élément HTML qui a l'ID "map"
-//     macarte2 = L.map('map-trajet').setView([lat, lon], 11);
-//     // Leaflet ne récupère pas les cartes (tiles) sur un serveur par défaut. Nous devons lui préciser où nous souhaitons les récupérer. Ici, openstreetmap.fr
-//     L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
-//         // Il est toujours bien de laisser le lien vers la source des données
-//         attribution: 'données © <a href="//osm.org/copyright">OpenStreetMap</a>/ODbL - rendu <a href="//openstreetmap.fr">OSM France</a>',
-//         minZoom: 1,
-//         maxZoom: 20
-//     }).addTo(macarte2);
-//     var gpx = data[1]["randonnee_carte"]; // Cela devrait être l'URL de ton fichier GPX
-//     new L.GPX(gpx, {async: true}).on('loaded', function(e) {
-//         macarte2.fitBounds(e.target.getBounds());
-//     }).addTo(macarte2);
-//}
 
-async function loadGPXAndDisplay() {
-    const gpxUrl = 'https://cors-anywhere.herokuapp.com/https://randogps.net/nb_telecharge.php?dep=38&num=8';  // URL où le GPX est généré
 
-    try {
+
+function initMapTrajet(lat, lon,id) {
+     // Créer l'objet "macarte" et l'insèrer dans l'élément HTML qui a l'ID "map"
+    macarte2 = L.map('map-trajet').setView([lat, lon], 11);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
+       // Il est toujours bien de laisser le lien vers la source des données
+       attribution: 'données © <a href="//osm.org/copyright">OpenStreetMap</a>/ODbL - rendu <a href="//openstreetmap.fr">OSM France</a>',
+       minZoom: 1,
+       maxZoom: 20
+    }).addTo(macarte2);
+
+
         
-        const response = await fetch(gpxUrl);
-        
-        if (!response.ok) {
-            throw new Error('Erreur lors du téléchargement du fichier GPX');
-        }
 
-        // 2. Lire le contenu du fichier GPX
-        const gpxData = await response.text();
-        
-        // 3. Afficher le GPX sur la carte
-        const macarte2 = L.map('map-trajet').setView([latUser, longUser], 11);  // Adapte selon ton besoin
-        L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
-            attribution: 'données © <a href="//osm.org/copyright">OpenStreetMap</a>/ODbL - rendu <a href="//openstreetmap.fr">OSM France</a>',
-            minZoom: 1,
-            maxZoom: 20
-        }).addTo(macarte2);
-
-        // 4. Créer un objet GPX avec le fichier récupéré
-        new L.GPX(gpxData, { async: true })
-            .on('loaded', function(e) {
-                macarte2.fitBounds(e.target.getBounds());  // Ajuster la carte aux limites du GPX
-            })
-            .addTo(macarte2);
-    } catch (error) {
-        console.error("Erreur lors du chargement du fichier GPX:", error);
-    }
 }
+
+
+
 // window.onload = function(){
 //     const succes = (position) =>{
 //         const {latitude, longitude}=position.coords;
@@ -121,11 +146,9 @@ async function init(){
         console.log(data);
 
         getproxi();
-        let macarte = null;
-        let macarte2 = null;
+
         initMap(latUser,longUser,macarte); 
-        loadGPXAndDisplay();
-        // initMapTrajet(latUser,longUser,macarte2);
+        initMapTrajet(latUser,longUser,macarte2);
 
     }catch (error) {
         console.error('Erreur attrapée dans init() :', error);
@@ -150,9 +173,13 @@ function getproxi(){  // renvoie une liste avec les rando à moins de 10km de la
         const locRando = data[i]["randonnee_localisation"].split(";");
         const longRando = locRando[1];
         const latRando = locRando[0];
-        const distMax = 10;
-        if ((longToKm(longRando,latRando)-longToKm(longUser,latUser))**2 + (latToKm(latRando)-latToKm(latUser))**2 <= distMax**2){ // calcul de distance : n  = dist max
+        let time2 = data[i]["randonnee_duree"].split(" ");
+        time2 = parseFloat(time2[0].split(":").join("."));
+        let distance_rando = data[i]["randonnee_distance"].split(" ");
+        distance_rando = parseFloat(distance_rando[0])
+        if ((longToKm(longRando,latRando)-longToKm(longUser,latUser))**2 + (latToKm(latRando)-latToKm(latUser))**2 <= distMax**2 &&  time2<=time && distance_rando<=distance){ // calcul de distance : n  = dist max
             listeRando.push(data[i])
+            console.log(time2,distance_rando)
         }
     }
     console.log(listeRando)
@@ -160,5 +187,21 @@ function getproxi(){  // renvoie une liste avec les rando à moins de 10km de la
 
 
 }
+
+
+buttonChearch.addEventListener("click" ,() =>{
+    console.log("event");
+    if(timeInput.value != null){
+        time = timeInput.value
+    }
+    if(distanceInput.value != null){
+        distance = distanceInput.value
+    }
+    if(proxiInput.value != null){
+        distMax = proxiInput.value
+    }
+   
+});
+
 
 
