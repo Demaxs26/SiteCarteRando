@@ -7,6 +7,7 @@ const displayName = document.querySelector(".box-title p");
 const displayDistance = document.querySelector(".box-descrp #distance");
 const displayDuree = document.querySelector(".box-descrp #duree");
 const displayDescr = document.querySelector(".box-descrp #description-rando");
+const gpxGet = document.querySelector('.randoGpxGet')
 console.log(displayDescr,displayName,displayDistance,displayDuree)
 
 let macarte = null;
@@ -57,24 +58,36 @@ function initMap(lat, lon) {
             // let response = await fetch('gpx_files/'+listeRando[i]['randonnee_id']+".gpx"); 
             let response = await fetch('gpx_files/' + listeRando[i]['randonnee_id'] + '.gpx');
             let gpx = await response.text();
-            gpx = gpx.substr(2);
-            console.log(gpx)
-            console.log(macarte2)
-            if (!macarte2) {
-                console.warn("Carte non initialisée !");
-                return;
-            }
+            gpx = gpx.slice(2,-1);
+            gpx = gpx.replace(/\\n/g, '\n')
+                .replace(/\\"/g, '"')
+                .replace(/\\'/g, "'")
+                .replace(/\\\\/g, '\\');
+            console.log("GPX cleaned preview:", gpx.slice(0, 100));
+            // console.log(macarte2)
+            // if (!macarte2) {
+            //     console.warn("Carte non initialisée !");
+            //     return;
+            // }
             if (!gpx.startsWith("<?xml")) {
                 console.error("Le fichier GPX n'est pas bien interprété !");
             }
-            const gpxLayer = new L.GPX(gpx, {async: true}).on('loaded', function(e) {
-                macarte2.fitBounds(e.target.getBounds());
-            });
-            gpxLayer.addTo(macarte2);
-            // L.control.layers(null, { 'Trace GPX': gpxLayer }).addTo(macarte2);
+            // new L.GPX(gpx, {async: true}).on('loaded', function(e) {
+            //     macarte2.fitBounds(e.target.getBounds());
+            // }).addTo(macarte2);
+            // // L.control.layers(null, { 'Trace GPX': gpxLayer }).addTo(macarte2);
 
+            // console.log(macarte2)
+            try{
+                macarte2.clearLayers();
+            }catch{
+            }
+            let trajet = new L.GPX(gpx, {async: true}).on('loaded', function(e) {
+                macarte2.fitBounds(e.target.getBounds());
+            }).addTo(macarte2);
+            // L.control.layers(null, { 'Trace GPX': gpxLayer }).addTo(macarte2);
+        
             console.log(macarte2)
-           
         })
     }
 
@@ -84,7 +97,11 @@ function initMap(lat, lon) {
 
 function initMapTrajet(lat, lon,id) {
      // Créer l'objet "macarte" et l'insèrer dans l'élément HTML qui a l'ID "map"
-    macarte2 = L.map('map-trajet').setView([lat, lon], 11);
+    try{
+        macarte2 = L.map('map-trajet').setView([lat, lon], 11);
+    }catch{
+    }
+
 
     L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
        // Il est toujours bien de laisser le lien vers la source des données
@@ -93,6 +110,7 @@ function initMapTrajet(lat, lon,id) {
        maxZoom: 20
     }).addTo(macarte2);
 
+   
 
         
 
@@ -209,6 +227,5 @@ buttonChearch.addEventListener("click" ,() =>{
     }
     getproxi()
 });
-
 
 
