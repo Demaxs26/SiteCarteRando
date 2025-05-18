@@ -1,13 +1,12 @@
-let timeInput = document.getElementById("dureeHeure") ;
-let distanceInput = document.getElementById("distance") ;
-let proxiInput = document.getElementById("proximite") ;
-
-const buttonChearch = document.querySelector(".button-chearch")
+const timeInput = document.getElementById("dureeHeure") ;
+const distanceInput = document.getElementById("distance") ;
+const proxiInput = document.getElementById("proximite") ;
+const titreCarteTracer = document.querySelector(".tirte-carte-rando");
+const buttonChearch = document.querySelector(".button-chearch");
 const displayName = document.querySelector(".box-title p");
 const displayDistance = document.querySelector(".box-descrp #distance");
 const displayDuree = document.querySelector(".box-descrp #duree");
 const displayDescr = document.querySelector(".box-descrp #description-rando");
-const gpxGet = document.querySelector('.randoGpxGet')
 console.log(displayDescr,displayName,displayDistance,displayDuree)
 
 let macarte = null;
@@ -23,16 +22,19 @@ let marker1 = null; //definition global *
 // Fonction d'initialisation de la carte
 function initMap(lat, lon) {
     // Créer l'objet "macarte" et l'insèrer dans l'élément HTML qui a l'ID "map"
-    macarte = L.map('map').setView([lat, lon], 11);
-    // Leaflet ne récupère pas les cartes (tiles) sur un serveur par défaut. Nous devons lui préciser où nous souhaitons les récupérer. Ici, openstreetmap.fr
-    L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
-        // Il est toujours bien de laisser le lien vers la source des données
-        attribution: 'données © <a href="//osm.org/copyright">OpenStreetMap</a>/ODbL - rendu <a href="//openstreetmap.fr">OSM France</a>',
-        minZoom: 1,
-        maxZoom: 20
-    }).addTo(macarte);
-    let marker = L.marker([lat, lon]).addTo(macarte);
-    marker.bindPopup("votre localisation");
+    try{
+        macarte = L.map('map').setView([lat, lon], 11);
+        // Leaflet ne récupère pas les cartes (tiles) sur un serveur par défaut. Nous devons lui préciser où nous souhaitons les récupérer. Ici, openstreetmap.fr
+        L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
+            // Il est toujours bien de laisser le lien vers la source des données
+            attribution: 'données © <a href="//osm.org/copyright">OpenStreetMap</a>/ODbL - rendu <a href="//openstreetmap.fr">OSM France</a>',
+            minZoom: 1,
+            maxZoom: 20
+        }).addTo(macarte);
+        let marker = L.marker([lat, lon]).addTo(macarte);
+        marker.bindPopup("votre localisation");
+    }catch{}
+
 
     for (let i = 0; i<listeRando.length;i++){
 
@@ -40,7 +42,6 @@ function initMap(lat, lon) {
         const longRando = parseFloat(locRando[1]);
         const latRando = parseFloat(locRando[0]);
         marker1 = L.marker([latRando, longRando]); //let
-
         marker1.bindPopup(listeRando[i]["randonnee_nom"]);
         marker1.addTo(macarte);
         marker1.addEventListener("click" , async (e)=>{
@@ -51,7 +52,7 @@ function initMap(lat, lon) {
             displayDistance.textContent = listeRando[i]['randonnee_distance'];
             displayDuree.textContent = listeRando[i]['randonnee_duree'];
             displayDescr.textContent = listeRando[i]['randonnee_descr']
-
+            titreCarteTracer.textContent = listeRando[i]['randonnee_nom']
             // affichage carte  //
 
             console.log("id:",listeRando[i]['randonnee_id']);
@@ -97,10 +98,8 @@ function initMap(lat, lon) {
 
 function initMapTrajet(lat, lon,id) {
      // Créer l'objet "macarte" et l'insèrer dans l'élément HTML qui a l'ID "map"
-    try{
-        macarte2 = L.map('map-trajet').setView([lat, lon], 11);
-    }catch{
-    }
+    macarte2 = L.map('map-trajet').setView([lat, lon], 11);
+
 
 
     L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
@@ -219,13 +218,14 @@ buttonChearch.addEventListener("click" ,() =>{
     if(proxiInput.value != null){
         distMax = proxiInput.value
     }
-    marker1.clearLayers();
+
     const taille = listeRando.length;
     for (let i = 0;i<taille;i++){
         
         listeRando.pop()
     }
     getproxi()
+    initMap()
 });
 
 
